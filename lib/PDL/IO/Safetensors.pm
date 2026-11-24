@@ -10,7 +10,7 @@ use PDL::Core ();
 use PDL::Lite ();
 use PDL::Types ();
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.011';
 our @EXPORT_OK = qw(rsafetensors wsafetensors safetensors_header);
 
 my %DTYPE_TO_PDL = (
@@ -179,6 +179,14 @@ L<PDL> ndarrays.
 =head2 safetensors_header($file)
 
 Reads and returns only the decoded JSON header from C<$file>.
+
+=head1 TYPES
+
+Supports real numeric tensor dtypes defined by the Safetensors specification
+(C<F32>/C<float>, C<F64>/C<double>, C<I8>/C<sbyte>, C<U8>/C<byte>,
+C<I16>/C<short>, C<U16>/C<ushort>, C<I32>/C<long>, C<U32>/C<ulong>,
+C<I64>/C<longlong>, C<U64>/C<ulonglong>). Complex types are not part of the
+Safetensors format specification.
 
 =head1 AUTHOR
 
