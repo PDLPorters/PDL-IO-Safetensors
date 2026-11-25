@@ -6,3 +6,15 @@
 ^PDL-IO-Safetensors-.*\.tar\.gz$
 \.bak$
 \.swp$
+^\.git/
+^\.github/
+^\.gitignore$
+^dot-git/
+^_alien/
+\.bs$
+\.o$
+\.xsc$
+^lib/.*\.c$
+\.tar\.gz$
+~$
+^PDL-IO-Safetensors-

@@ -10,7 +10,7 @@ use PDL::Core ();
 use PDL::Lite ();
 use PDL::Types ();
 
-our $VERSION   = '0.01';
+our $VERSION   = '0.011';
 our @EXPORT_OK = qw(rsafetensors wsafetensors safetensors_header);
 
 my %DTYPE_TO_PDL = (
@@ -180,12 +180,79 @@ L<PDL> ndarrays.
 
 Reads and returns only the decoded JSON header from C<$file>.
 
+=head1 TUTORIAL
+
+This tutorial translates the HuggingFace Safetensors save/load quickstart into
+idiomatic Perl and L<PDL>.
+
+=head2 1. Save Named PDL Tensors to a Safetensors File
+
+Pass the output path, a hashref of named L<PDL> ndarrays, and an optional
+C<__metadata__> hashref to C<wsafetensors>:
+
+    use strict;
+    use warnings;
+    use File::Temp qw(tempfile);
+    use PDL;
+    use PDL::IO::Safetensors qw(rsafetensors wsafetensors safetensors_header);
+
+    my (undef, $path) = tempfile(SUFFIX => '.safetensors', UNLINK => 1);
+
+    my $tensors = {
+        'linear.weight' => float([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+        'linear.bias'   => float([0.1, -0.2]),
+    };
+
+    wsafetensors($path, $tensors, { format => 'pt', framework => 'pdl' });
+
+=head2 2. Inspect the JSON Header Without Loading Tensor Data
+
+Use C<safetensors_header> to inspect metadata, dtypes, row-major shapes, and
+byte offsets without reading tensor payloads:
+
+    my $hdr = safetensors_header($path);
+    print 'Format: ', $hdr->{__metadata__}{format}, "\n";
+    for my $name (sort grep { $_ ne '__metadata__' } keys %{$hdr}) {
+        my $info = $hdr->{$name};
+        printf "Tensor %-15s dtype=%-3s shape=[%s] bytes=%d\n",
+            $name,
+            $info->{dtype},
+            join(',', @{ $info->{shape} }),
+            $info->{data_offsets}[1] - $info->{data_offsets}[0];
+    }
+
+=head2 3. Load Tensors Back into PDL
+
+Use C<rsafetensors> to load all tensors into a hashref of L<PDL> ndarrays and
+perform vectorized operations:
+
+    my $loaded = rsafetensors($path);
+    my $w = $loaded->{'linear.weight'};
+    my $b = $loaded->{'linear.bias'};
+
+    printf "Weight dims: (%s), bias sum: %.2f\n",
+        join(',', $w->dims), $b->sum;
+
+See C<examples/quickstart.pl> in the distribution for a complete runnable
+script.
+
+=head1 TYPES
+
+Supports real numeric tensor dtypes defined by the Safetensors specification
+(C<F32>/C<float>, C<F64>/C<double>, C<I8>/C<sbyte>, C<U8>/C<byte>,
+C<I16>/C<short>, C<U16>/C<ushort>, C<I32>/C<long>, C<U32>/C<ulong>,
+C<I64>/C<longlong>, C<U64>/C<ulonglong>). Complex types are not part of the
+Safetensors format specification.
+
 =head1 AUTHOR
 
 C.J. Collier E<lt>cjac@google.comE<gt>
 
-=head1 LICENSE AND COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright 2026 Google LLC. Apache License, Version 2.0.
+Copyright 2026 Google LLC
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
